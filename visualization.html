@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h2 class="mb-4">Visualisasi Data Sentimen</h2>
+
+    <!-- Charts Section -->
+    <div class="row">
+        {% for aspect, chart in charts.items() %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header gradient-header text-white">
+                    <h5 class="mb-0">{{ aspect }}</h5>
+                </div>
+                <div class="card-body">
+                    {{ chart.html|safe }}
+                    <div class="mt-3">
+                        <h6>Detail Sentimen:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for label, count in chart.counts.items() %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ 'success' if label == 'positif' else 'secondary' if label == 'netral' else 'danger' }}">
+                                    {{ label|capitalize }}
+                                </span>
+                                <span>{{ count }}</span>
+                            </li>
+                            {% else %}
+                            <li class="list-group-item">Tidak ada data</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Data Table Section -->
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>Data Ulasan Lengkap</h4>
+            <div class="d-flex gap-3">
+                <form class="search-form" action="{{ url_for('home') }}" method="GET">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               name="q" 
+                               placeholder="Cari ulasan..." 
+                               value="{{ search_query }}"
+                               aria-label="Search">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+                <a href="{{ url_for('download') }}" class="btn btn-success">
+                    <i class="bi bi-download me-2"></i>Unduh CSV
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nama Pengirim</th>
+                                <th>Isi Ulasan</th>
+                                <th>Fasilitas</th>
+                                <th>Harga</th>
+                                <th>Pelayanan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                            <tr>
+                                <td>{{ row.no }}</td>
+                                <td>{{ row.nama }}</td>
+                                <td class="text-wrap">{{ row.ulasan|truncate(150) }}</td>
+                                <td><span class="badge bg-{{ 'success' if row.fasilitas == 'positif' else 'secondary' if row.fasilitas == 'netral' else 'danger' }}">{{ row.fasilitas|capitalize }}</span></td>
+                                <td><span class="badge bg-{{ 'success' if row.harga == 'positif' else 'secondary' if row.harga == 'netral' else 'danger' }}">{{ row.harga|capitalize }}</span></td>
+                                <td><span class="badge bg-{{ 'success' if row.pelayanan == 'positif' else 'secondary' if row.pelayanan == 'netral' else 'danger' }}">{{ row.pelayanan|capitalize }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <em>Tidak ada data ulasan</em>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

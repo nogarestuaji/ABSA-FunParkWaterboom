@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Tambah Ulasan Baru</h2>
+
+    <!-- Alert error global -->
+    {% if errors %}
+    <div class="alert alert-danger">
+        <h5>Error selama pemrosesan:</h5>
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Input Manual Card -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header gradient-header text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Input Manual</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Pengirim</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="nama" 
+                                   placeholder="Nama (opsional)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Isi Ulasan</label>
+                            <textarea class="form-control" 
+                                      name="text" 
+                                      rows="4" 
+                                      placeholder="Tulis ulasan Anda..."
+                                      required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-analytics w-100">
+                            <i class="bi bi-robot"></i> Analisis Sentimen
+                        </button>
+                    </form>
+
+                    {% if result %}
+                    <div class="mt-4 pt-3 border-top">
+                        <h5 class="mb-3">Hasil Analisis:</h5>
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12 mb-2">
+                                        <strong>Nama:</strong> {{ nama or 'Anonim' }}
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <strong>Ulasan:</strong> {{ text|truncate(150) }}
+                                    </div>
+                                    {% for aspect, sentiment in result.items() %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="card shadow-sm">
+                                            <div class="card-header gradient-header text-white text-center">
+                                                {{ aspect|capitalize }}
+                                            </div>
+                                            <div class="card-body text-center p-2">
+                                                <span class="badge-analytics bg-{{ 'success' if sentiment == 'positif' else 'warning' if sentiment == 'netral' else 'danger' }}">
+                                                    {{ sentiment|capitalize }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload CSV Card -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header gradient-header text-white">
+                    <h4 class="mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>Upload CSV</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">File CSV</label>
+                            <input type="file" 
+                                   class="form-control" 
+                                   name="csv_file" 
+                                   accept=".csv"
+                                   required>
+                            <div class="form-text">
+                                Format CSV yang diperlukan:
+                                <ul>
+                                    <li>Kolom wajib: <code>nama</code>, <code>ulasan</code></li>
+                                    <li>Contoh format:
+                                        <pre class="bg-dark text-white p-2 mt-2 rounded">
+nama,ulasan
+John Doe,Pelayanan sangat memuaskan
+Jane Smith,Harga terlalu mahal</pre>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-analytics w-100">
+                            <i class="bi bi-upload"></i> Upload dan Analisis
+                        </button>
+                    </form>
+
+                    {% if summary_new %}
+                    <div class="mt-4 pt-3 border-top">
+                        <h5 class="mb-3">📊 Hasil Analisis Data Baru</h5>
+
+                        {% if success_message %}
+                        <div class="alert alert-success alert-dismissible fade show">
+                            {{ success_message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            {% for aspect, counts in summary_new.items() %}
+                            <div class="col-md-4">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header gradient-header text-white">
+                                        {{ aspect|upper }}
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="chart-{{ aspect }}"></canvas>
+                                        </div>
+                                        <div class="mt-3">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Positif
+                                                    <span class="badge-analytics bg-success">{{ counts.positif }}</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Negatif
+                                                    <span class="badge-analytics bg-danger">{{ counts.negatif }}</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Netral
+                                                    <span class="badge-analytics bg-warning">{{ counts.netral }}</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if errors %}
+                    <div class="alert alert-danger mt-3">
+                        <h5>Error ({{ errors|length }}):</h5>
+                        <ul class="mb-0">
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
